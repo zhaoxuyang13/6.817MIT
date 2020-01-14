@@ -11,7 +11,7 @@ import java.io.*;
  * @see BufferPool
  *
  */
-public class HeapPage implements Page {
+public class HeapPage implements Page { /*  TODO-6  */
 
     final HeapPageId pid;
     final TupleDesc td;
@@ -63,23 +63,24 @@ public class HeapPage implements Page {
     }
 
     /** Retrieve the number of tuples on this page.
+     *
+     *  floor((BufferPool.getPageSize()*8) / (tuple size * 8 + 1))
+     * 
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        // some code goes here
-        return 0;
-
+        return (int)Math.floor((BufferPool.getPageSize()*8) / (td.getSize() *8 + 1));
     }
 
     /**
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
+     * 
+     *  ceiling(no. tuple slots / 8)
+     * 
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        
-        // some code goes here
-        return 0;
-                 
+        return (int)Math.ceil( getNumTuples() /8); 
     }
     
     /** Return a view of this page before it was modified
@@ -111,8 +112,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+        return pid;
     }
 
     /**
@@ -280,17 +280,27 @@ public class HeapPage implements Page {
     /**
      * Returns the number of empty slots on this page.
      */
-    public int getNumEmptySlots() {
-        // some code goes here
-        return 0;
+    public int getNumEmptySlots() { //TODO: naive implemetation, can do better
+        int tupleNo = getNumTuples();
+        int counter = 0 ;
+        for(int i = 0; i < tupleNo; i ++){
+            if(!isSlotUsed(i))
+                counter ++ ;
+        }
+        return counter;
     }
 
+    /* helper function */
+    public static boolean isSet(byte[] arr, int bit) {
+        int index = bit / 8;  // Get the index of the array for the byte with this bit
+        int bitPosition = bit % 8;  // Position of this bit in a byte
+        return (arr[index] >> bitPosition & 1) == 1;
+    }
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        // some code goes here
-        return false;
+        return isSet(header, i );
     }
 
     /**
@@ -306,8 +316,30 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        // some code goes here
-        return null;
+        int initCounter = 0 ;
+        final int tupleNum = getNumTuples();
+        while(initCounter < tupleNum && !isSlotUsed(initCounter)){
+            initCounter ++ ;
+        }
+        final int initValue = initCounter;
+        return new Iterator<Tuple>(){
+            int counter = initValue;
+			@Override
+			public boolean hasNext() {
+				return counter < tupleNum;
+			}
+
+			@Override
+			public Tuple next() {
+                Tuple t = tuples[counter];
+                counter ++ ;
+                while(counter < tupleNum && !isSlotUsed(counter)){
+                    counter ++ ;
+                }
+				return t;
+			}
+            
+        } ;
     }
 
 }

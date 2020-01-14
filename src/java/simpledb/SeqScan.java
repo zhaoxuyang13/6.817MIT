@@ -7,7 +7,7 @@ import java.util.*;
  * each tuple of a table in no particular order (e.g., as they are laid out on
  * disk).
  */
-public class SeqScan implements OpIterator {
+public class SeqScan implements OpIterator { /*  TODO-7  */
 
     private static final long serialVersionUID = 1L;
 

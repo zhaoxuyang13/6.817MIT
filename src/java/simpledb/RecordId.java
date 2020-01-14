@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * A RecordId is a reference to a specific tuple on a specific page of a
@@ -9,7 +10,8 @@ import java.io.Serializable;
 public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
+    private PageId pid;
+    private int tpNo;
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
      * number.
@@ -20,23 +22,22 @@ public class RecordId implements Serializable {
      *            the tuple number within the page.
      */
     public RecordId(PageId pid, int tupleno) {
-        // some code goes here
+        this.pid = pid;
+        this.tpNo = tupleno;
     }
 
     /**
      * @return the tuple number this RecordId references.
      */
     public int getTupleNumber() {
-        // some code goes here
-        return 0;
+        return tpNo;
     }
 
     /**
      * @return the page id this RecordId references.
      */
     public PageId getPageId() {
-        // some code goes here
-        return null;
+        return pid;
     }
 
     /**
@@ -47,8 +48,11 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        if(o == null || o.getClass() != RecordId.class){
+            return false;
+        }
+        RecordId oid = (RecordId) o;
+        return oid.getPageId().equals(pid) && oid.getTupleNumber() == tpNo;
     }
 
     /**
@@ -59,9 +63,7 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
-
+        return Objects.hash(pid.hashCode(),tpNo);
     }
 
 }

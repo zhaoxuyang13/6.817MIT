@@ -1,7 +1,10 @@
 package simpledb;
 
 import java.io.*;
-
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -15,12 +18,14 @@ import java.util.concurrent.ConcurrentHashMap;
  * 
  * @Threadsafe, all fields are final
  */
-public class BufferPool {
+public class BufferPool { /*  TODO-4  */
     /** Bytes per page, including header. */
     private static final int DEFAULT_PAGE_SIZE = 4096;
 
     private static int pageSize = DEFAULT_PAGE_SIZE;
-    
+
+    Map<PageId, Page> id2Page;
+    Integer numPages;
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
@@ -32,6 +37,9 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
+        // pages = new ArrayList<Page>(numPages);
+        id2Page = new HashMap<>(numPages);
+        this.numPages = numPages;
         // some code goes here
     }
     
@@ -66,8 +74,19 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        
+        Catalog catalog = Database.getCatalog();
+    
+        if(id2Page.containsKey(pid))
+            return id2Page.get(pid);
+        else {
+            Page page = catalog.getDatabaseFile(pid.getTableId()).readPage(pid);
+            if(id2Page.size() <= numPages)
+                id2Page.put(pid, page);
+            else 
+                throw new DbException("buffer pool is full");
+            return page;
+        }
     }
 
     /**
