@@ -82,7 +82,7 @@ public class BufferPool { /*  TODO-4  */
         else {
             Page page = catalog.getDatabaseFile(pid.getTableId()).readPage(pid);
             if(id2Page.size() <= numPages)
-                id2Page.put(pid, page);
+                id2Page.put(pid, page); 
             else 
                 throw new DbException("buffer pool is full");
             return page;

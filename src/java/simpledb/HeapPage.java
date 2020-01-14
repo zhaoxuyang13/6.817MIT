@@ -61,7 +61,6 @@ public class HeapPage implements Page { /*  TODO-6  */
 
         setBeforeImage();
     }
-
     /** Retrieve the number of tuples on this page.
      *
      *  floor((BufferPool.getPageSize()*8) / (tuple size * 8 + 1))
