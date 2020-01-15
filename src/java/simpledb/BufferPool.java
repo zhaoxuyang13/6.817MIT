@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -37,10 +36,8 @@ public class BufferPool { /*  TODO-4  */
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // pages = new ArrayList<Page>(numPages);
         id2Page = new HashMap<>(numPages);
         this.numPages = numPages;
-        // some code goes here
     }
     
     public static int getPageSize() {

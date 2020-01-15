@@ -31,23 +31,13 @@ public class Tuple implements Serializable { /*  TODO-1  */
     public Tuple(TupleDesc td) {
         tupleDesc = td;
         fields = Arrays.asList(new Field[td.numFields()]); // init with fixed size
-        // Iterator<TDItem> iter = td.iterator();
-        // while(iter.hasNext()){
-        //     TDItem item = iter.next();
-        //     Type filedType = item.fieldType;
-        //     if(filedType == Type.INT_TYPE){
-        //         fields.add(new IntField())
-        //     }
-        // }
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
         return tupleDesc;
-        // return null;
     }
 
     /**
@@ -55,8 +45,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
      *         be null.
      */
     public RecordId getRecordId() {
-        // some code goes here
-        // return null;
         return recordId;
     }
 
@@ -80,7 +68,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
         fields.set(i,f);
     }
 
@@ -103,7 +90,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
      * where \t is any whitespace (except a newline)
      */
     public String toString() {
-        // some code goes here
         StringBuffer buffer = new StringBuffer();
         int size = fields.size();
         for(int i = 0; i < size; i++){
@@ -111,7 +97,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
             if(i != size -1 ) buffer.append("\t");
         }
         return buffer.toString();
-        // throw new UnsupportedOperationException("Implement this");
     }
 
     /**
@@ -120,7 +105,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
      * */
     public Iterator<Field> fields()
     {
-        // some code goes here
         return fields.iterator();
     }
 
@@ -129,7 +113,22 @@ public class Tuple implements Serializable { /*  TODO-1  */
      * */
     public void resetTupleDesc(TupleDesc td)
     {
-        // some code goes here
         tupleDesc = td;
+    }
+
+    /**
+     *  combine 2 Tuples 
+     */
+    public void combine2Tuples(Tuple tuple1, Tuple tuple2){
+        Iterator<Field> iter1 = tuple1.fields(), iter2 = tuple2.fields();
+        int i = 0;
+        while(iter1.hasNext()){
+            this.setField(i, iter1.next());
+            i ++;
+        }
+        while(iter2.hasNext()){
+            this.setField(i, iter2.next());
+            i ++;
+        }
     }
 }

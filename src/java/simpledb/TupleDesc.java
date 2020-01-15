@@ -64,7 +64,6 @@ public class TupleDesc implements Serializable { /*  TODO-2  */
      *            be null.
      */
     public TupleDesc(final Type[] typeAr, final String[] fieldAr) {
-        // TODO: not considered => names may be null
         items = new ArrayList<TDItem>();
         if(typeAr.length != fieldAr.length) {
             System.err.println("type length mismatch with field length");
@@ -108,7 +107,6 @@ public class TupleDesc implements Serializable { /*  TODO-2  */
      */
     public String getFieldName(final int i) throws NoSuchElementException {
         return items.get(i).fieldName;
-        // return null;
     }
 
     /**

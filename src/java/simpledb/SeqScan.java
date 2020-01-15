@@ -121,6 +121,9 @@ public class SeqScan implements OpIterator {
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
+        if(!open || next == null) {
+            throw new NoSuchElementException();
+        }
         Tuple res = next;
         next = fIterator.hasNext() ? fIterator.next() : null;
         return res;
@@ -128,6 +131,7 @@ public class SeqScan implements OpIterator {
 
     public void close() {
         open = false;
+        next = null;
     }
 
     public void rewind() throws DbException, NoSuchElementException,

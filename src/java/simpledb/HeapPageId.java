@@ -22,9 +22,7 @@ public class HeapPageId implements PageId {
 
     /** @return the table associated with this PageId */
     public int getTableId() {
-        // some code goes here
         return tableId;
-        // return 0;
     }
 
     /**
@@ -32,9 +30,7 @@ public class HeapPageId implements PageId {
      *   this PageId
      */
     public int getPageNumber() {
-        // some code goes here
         return pgNo;
-        // return 0;
     }
 
     /**
@@ -44,9 +40,7 @@ public class HeapPageId implements PageId {
      * @see BufferPool
      */
     public int hashCode() {
-        // some code goes here
         return Objects.hash(tableId,pgNo);
-        // throw new UnsupportedOperationException("implement this");
     }
 
     /**
@@ -57,13 +51,11 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        // some code goes here
         if(o == null || o.getClass() != HeapPageId.class){
             return false;
         }
         HeapPageId oid = (HeapPageId) o;
         return oid.getPageNumber() == pgNo && oid.getTableId() == tableId;
-        // return false;
     }
 
     /**
