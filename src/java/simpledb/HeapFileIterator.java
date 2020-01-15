@@ -4,7 +4,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class HeapFileIterator implements DbFileIterator {
-    private final int tableid;
+    private final int tableid;       
     private final int pageNum;
     private final TransactionId tid;
     private int currentPageNo;

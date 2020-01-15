@@ -13,7 +13,7 @@ import java.util.*;
  * @see simpledb.HeapPage#HeapPage
  * @author Sam Madden
  */
-public class HeapFile implements DbFile { /* TODO-5 */
+public class HeapFile implements DbFile { 
 
     private Integer fileId;
     private File file;

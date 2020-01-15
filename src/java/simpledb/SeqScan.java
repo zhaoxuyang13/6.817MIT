@@ -2,14 +2,23 @@ package simpledb;
 
 import java.util.*;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * SeqScan is an implementation of a sequential scan access method that reads
  * each tuple of a table in no particular order (e.g., as they are laid out on
  * disk).
  */
-public class SeqScan implements OpIterator { /*  TODO-7  */
+public class SeqScan implements OpIterator { 
 
     private static final long serialVersionUID = 1L;
+    private final  TransactionId tid;
+    private DbFile file;
+    private String name;
+    private String tableAlias;
+    private boolean open;
+    private Tuple next;
+    private DbFileIterator fIterator;
 
     /**
      * Creates a sequential scan over the specified table as a part of the
@@ -28,7 +37,13 @@ public class SeqScan implements OpIterator { /*  TODO-7  */
      *            tableAlias.null, or null.null).
      */
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+        this.tid = tid;
+        this.tableAlias = tableAlias;
+        this.file = Database.getCatalog().getDatabaseFile(tableid);
+        this.name = Database.getCatalog().getTableName(tableid);
+        this.open = false;
+        this.fIterator = file.iterator(this.tid);
+        // fIterator.open();
     }
 
     /**
@@ -37,16 +52,14 @@ public class SeqScan implements OpIterator { /*  TODO-7  */
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return null;
+        return name;
     }
 
     /**
      * @return Return the alias of the table this operator scans.
      * */
-    public String getAlias()
-    {
-        // some code goes here
-        return null;
+    public String getAlias(){
+       return tableAlias;
     }
 
     /**
@@ -62,7 +75,11 @@ public class SeqScan implements OpIterator { /*  TODO-7  */
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        // some code goes here
+        this.tableAlias = tableAlias;
+        this.file = Database.getCatalog().getDatabaseFile(tableid);
+        this.name = Database.getCatalog().getTableName(tableid);
+        this.open = false;
+        this.fIterator = file.iterator(this.tid);
     }
 
     public SeqScan(TransactionId tid, int tableId) {
@@ -70,7 +87,8 @@ public class SeqScan implements OpIterator { /*  TODO-7  */
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        open = true;
+        rewind();
     }
 
     /**
@@ -84,27 +102,39 @@ public class SeqScan implements OpIterator { /*  TODO-7  */
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        TupleDesc td =  file.getTupleDesc();
+        ArrayList<Type> types = new ArrayList<>();
+        ArrayList<String> names = new ArrayList<>();
+        Iterator<TDItem> iter = td.iterator();
+        while(iter.hasNext()){
+            TDItem item = iter.next();
+            types.add(item.fieldType);
+            names.add(tableAlias + "." +item.fieldName);
+        }
+        return new TupleDesc(types.toArray(new Type[0]), names.toArray(new String[0]));
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return false;
+        return open && next != null; 
+        
     }
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        Tuple res = next;
+        next = fIterator.hasNext() ? fIterator.next() : null;
+        return res;
     }
 
     public void close() {
-        // some code goes here
+        open = false;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
+        if(open){
+            fIterator.open();
+            next = fIterator.hasNext() ? fIterator.next() : null;
+        }
     }
 }

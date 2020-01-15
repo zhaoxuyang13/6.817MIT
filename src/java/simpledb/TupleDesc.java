@@ -183,7 +183,7 @@ public class TupleDesc implements Serializable { /*  TODO-2  */
             types.add(item.fieldType);
             strings.add(item.fieldName);
         }
-        return new TupleDesc(types.toArray(new Type[types.size()]), strings.toArray(new String[strings.size()]));
+        return new TupleDesc(types.toArray(new Type[0]), strings.toArray(new String[0]));
     }
 
     /**
