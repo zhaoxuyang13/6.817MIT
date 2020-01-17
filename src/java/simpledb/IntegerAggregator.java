@@ -1,5 +1,9 @@
 package simpledb;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Knows how to compute some aggregate over a set of IntFields.
  */
@@ -7,6 +11,12 @@ public class IntegerAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
 
+    private final int gbfield,afield;
+    private final Type gbfieldtype;
+    private final TupleDesc tupleDesc;
+    private final Op operator;
+    private Map<Field, Integer> aggregateValues;
+    private Map<Field, Integer> groupCount;
     /**
      * Aggregate constructor
      * 
@@ -23,9 +33,17 @@ public class IntegerAggregator implements Aggregator {
      */
 
     public IntegerAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        this.gbfield = gbfield;
+        this.afield = afield;
+        this.gbfieldtype = gbfieldtype;
+        this.operator = what;
+        this.tupleDesc = gbfieldtype == null ? new TupleDesc(new Type[]{Type.INT_TYPE}) 
+                                            : new TupleDesc(new Type[]{gbfieldtype,Type.INT_TYPE});
     }
 
+    private Integer getPrevValue(Field key){
+        r
+    }
     /**
      * Merge a new tuple into the aggregate, grouping as indicated in the
      * constructor
@@ -34,7 +52,26 @@ public class IntegerAggregator implements Aggregator {
      *            the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
+        Field key = gbfield == NO_GROUPING ? null : tup.getField(gbfield);
+        Integer prevValue = aggregateValues.get(key);
+        Integer groupNum = groupCount.get(key);
+        switch (operator) {
+            case MIN:
+
+                break;
+            case MAX:
+                break;
+            case AVG:   
+                break;
+            case COUNT:
+                break;
+            case SUM:
+                break;
+            default:
+                throw new
+                UnsupportedOperationException("operator not supported");
+        }
+    
     }
 
     /**
