@@ -27,6 +27,7 @@ public abstract class Operator implements OpIterator {
             if (next == null)
                 throw new NoSuchElementException();
         }
+        // System.err.println(next.toString());
 
         Tuple result = next;
         next = null;
