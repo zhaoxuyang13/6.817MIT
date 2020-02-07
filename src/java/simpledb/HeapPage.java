@@ -24,6 +24,7 @@ public class HeapPage implements Page {
 
     TransactionId tid;
     boolean dirty;
+
     /**
      * Create a HeapPage from a set of bytes of data read from disk. The format of a
      * HeapPage is a set of header bytes indicating the slots of the page that are
@@ -254,18 +255,16 @@ public class HeapPage implements Page {
      * @param t The tuple to delete
      */
     public void deleteTuple(Tuple t) throws DbException {
-        int tupleNo = getNumTuples();
-        for(int i = 0; i < tupleNo; i ++){
-            if(tuples[i].equals(t)){
-                if(isSlotUsed(i)){
-                    throw new DbException("already empty");
-                }
-                // tuples[i] = null;
-                markSlotUsed(i,false);
-                return ;
-            }
+        if(t.getRecordId() == null || !t.getRecordId().getPageId().equals(pid)){
+            throw new DbException("can only be deleted from the its own page");
         }
-        throw new DbException("tuple not on this page");
+        int tupleNo = t.getRecordId().getTupleNumber();
+        if(!isSlotUsed(tupleNo)){
+            throw new DbException("tuple slot is already empty");
+        }
+        markSlotUsed(tupleNo, false);
+        tuples[tupleNo] = null;
+        return ;
     }
 
     /**
@@ -277,14 +276,18 @@ public class HeapPage implements Page {
      * @param t The tuple to add.
      */
     public void insertTuple(Tuple t) throws DbException {
-        if(!t.getTupleDesc().equals(this.td)){
+        if (!t.getTupleDesc().equals(this.td)) {
             throw new DbException("tupledesc mismatch");
         }
+        // System.err.println("page insert " + t.toString());
         int tupleNo = getNumTuples();
-        for(int i = 0;i < tupleNo; i ++){
-            if(!isSlotUsed(i)){
+        for (int i = 0; i < tupleNo; i++) {
+            if (!isSlotUsed(i)) {
+                RecordId rid = new RecordId(pid, i);
+                t.setRecordId(rid);
                 tuples[i] = t;
                 markSlotUsed(i, true);
+                return;
             }
         }
         throw new DbException("the page is full");
@@ -304,9 +307,9 @@ public class HeapPage implements Page {
      * the page is not dirty
      */
     public TransactionId isDirty() {
-        if(dirty)
+        if (dirty)
             return tid;
-        else 
+        else
             return null;
     }
 
@@ -344,9 +347,9 @@ public class HeapPage implements Page {
         int index = i / 8;
         int bitPosition = i % 8;
         byte newbyte = header[index];
-        if(value){
+        if (value) {
             newbyte |= (1 << bitPosition);
-        }else {
+        } else {
             newbyte &= ~(1 << bitPosition);
         }
         header[index] = newbyte;

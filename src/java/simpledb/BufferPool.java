@@ -17,7 +17,7 @@ import java.util.Map;
  * 
  * @Threadsafe, all fields are final
  */
-public class BufferPool { /*  TODO-4  */
+public class BufferPool { 
     /** Bytes per page, including header. */
     private static final int DEFAULT_PAGE_SIZE = 4096;
 
@@ -147,8 +147,12 @@ public class BufferPool { /*  TODO-4  */
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        DbFile file = Database.getCatalog().getDatabaseFile(tableId);
+        ArrayList<Page> pages = file.insertTuple(tid, t);
+        for(Page page: pages){
+            page.markDirty(true, tid);
+            id2Page.put(page.getId(), page);
+        }
     }
 
     /**
@@ -166,8 +170,12 @@ public class BufferPool { /*  TODO-4  */
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+
+        DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
+        ArrayList<Page>  pages = file.deleteTuple(tid, t);
+        for(Page page: pages){
+            page.markDirty(true, tid);
+        }
     }
 
     /**

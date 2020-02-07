@@ -14,7 +14,7 @@ import simpledb.TupleDesc.TDItem;
  * specified schema specified by a TupleDesc object and contain Field objects
  * with the data for each field.
  */
-public class Tuple implements Serializable { /*  TODO-1  */
+public class Tuple implements Serializable { 
 
     private static final long serialVersionUID = 1L;
 
@@ -55,7 +55,6 @@ public class Tuple implements Serializable { /*  TODO-1  */
      *            the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
         recordId = rid;
     }
 
