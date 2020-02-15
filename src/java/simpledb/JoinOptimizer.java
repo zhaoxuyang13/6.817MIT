@@ -224,10 +224,35 @@ public class JoinOptimizer {
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
         //Not necessary for labs 1--3
-
-        // some code goes here
-        //Replace the following
-        return joins;
+        for(LogicalJoinNode node: joins){
+            if(!stats.containsKey(node.t1Alias) || !stats.containsKey(node.t2Alias)
+            || !filterSelectivities.containsKey(node.t1Alias) || !filterSelectivities.containsKey(node.t2Alias)){
+                throw new ParsingException("");
+            }
+        }
+        PlanCache cache = new PlanCache();
+        for(int i = 0; i < joins.size(); i ++){
+            Set<Set<LogicalJoinNode>> subsets = enumerateSubsets(joins, i+1);
+            for(Set<LogicalJoinNode> subset : subsets){
+                CostCard bestCostCard = null;
+                for(LogicalJoinNode node : subset){
+                    CostCard costCard = computeCostAndCardOfSubplan(stats, filterSelectivities, node, subset, 
+                                        bestCostCard == null ? Double.POSITIVE_INFINITY : bestCostCard.cost, cache);
+                    if(costCard == null) 
+                        continue;
+                    else if(bestCostCard == null || bestCostCard.cost > costCard.cost){
+                        bestCostCard = costCard;
+                    }
+                }
+                if(bestCostCard != null){
+                    cache.addPlan(subset, bestCostCard.cost, bestCostCard.card, bestCostCard.plan);
+                }
+            }
+        }
+        if(explain){
+            printJoins(joins, cache, stats, filterSelectivities);
+        }
+        return cache.getOrder(new HashSet<>(joins));
     }
 
     // ===================== Private Methods =================================
