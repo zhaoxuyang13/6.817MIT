@@ -33,7 +33,8 @@ public class IntHistogram {
      */
     
     public IntHistogram(int buckets, int min, int max) {
-        this.buckets = new int[Math.min(buckets, max-min+1)];
+       
+        this.buckets = new int[Math.min(buckets, max - min+1)];
         this.min = min;
         this.max = max + 1;
         this.width = (1.0 + max - min ) / this.buckets.length;
@@ -65,8 +66,22 @@ public class IntHistogram {
      * @return Predicted selectivity of this particular operator and value
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
+        if(v >= max  | v < min){
+            switch(op){
+                case EQUALS: 
+                    return 0;
+                case NOT_EQUALS :
+                    return 1;
+                case LESS_THAN : case LESS_THAN_OR_EQ:
+                    return v >= max ? 1 : 0;
+                case GREATER_THAN : case GREATER_THAN_OR_EQ:
+                    return v < min ? 1 : 0;
+                default :
+                    return 0;
+            }
+        }
         int index = catagory(v);
-        // System.err.println(min + " " + max + " " + v + " " + index);
+        // System.err.println(min + " " + max + " " + v + " " + width+" " + buckets.length + "/" + index + " " + op.toString());
         double sel = 0;
         switch (op) {
             case EQUALS:
