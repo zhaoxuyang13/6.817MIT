@@ -3,12 +3,9 @@ package simpledb;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingDeque;
-
+import java.util.Set;
 import java.util.LinkedHashMap;
 
 /**
@@ -48,8 +45,10 @@ public class BufferPool {
     /** Bytes per page, including header. */
     private static final int DEFAULT_PAGE_SIZE = 4096;
     private static int pageSize = DEFAULT_PAGE_SIZE;
-    LRUCache<PageId, Page> id2Page;
-
+    private final LRUCache<PageId, Page> id2Page;
+    private final Map<PageId, Integer> id2Index;
+    private final Set<Integer> indexPool;
+    private final LockManager lockManager;
     Integer numPages;
     /**
      * Default number of pages passed to the constructor. This is used by other
@@ -66,6 +65,12 @@ public class BufferPool {
     public BufferPool(int numPages) {
         id2Page = new LRUCache<>(numPages);
         this.numPages = numPages;
+        this.lockManager = new LockManager(numPages);
+        this.id2Index = new HashMap<>();
+        this.indexPool = new HashSet<>();
+        for (int i = 0; i < numPages; i++) {
+            indexPool.add(i);
+        }
     }
 
     public static int getPageSize() {
@@ -101,11 +106,35 @@ public class BufferPool {
         Catalog catalog = Database.getCatalog();
 
         if (id2Page.containsKey(pid)) {
+            try {
+                lockManager.acquire(tid, id2Index.get(pid), perm);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
             return id2Page.get(pid);
         } else {
             Page page = catalog.getDatabaseFile(pid.getTableId()).readPage(pid);
-            if (id2Page.size() <= numPages)
+            if (id2Page.size() <= numPages) {
+                if (id2Page.size() == numPages) {
+                    evictPage();
+                }
+                if (!indexPool.isEmpty()) {
+                    Integer index = indexPool.iterator().next();
+                    indexPool.remove(index);
+                    if (id2Index.containsKey(pid)) {
+                        System.err.println("pid already has index\n");
+                    }
+                    id2Index.put(pid, index);
+                }
+                try {
+                    lockManager.acquire(tid, id2Index.get(pid), perm);
+                } catch (InterruptedException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                 id2Page.put(pid, page);
+            }
             else {
                 throw new DbException("buffer pool is full");
             }
@@ -122,8 +151,11 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-        // some code goes here
-        // not necessary for lab1|lab2
+        if(!id2Index.containsKey(pid)){
+            throw new IllegalArgumentException("page not in buffer");
+        }
+        lockManager.release(tid, id2Index.get(pid));
+
     }
 
     /**
@@ -222,6 +254,13 @@ public class BufferPool {
      */
     public synchronized void discardPage(PageId pid) {
         id2Page.remove(pid);
+        Integer index = id2Index.get(pid);
+        if(indexPool.contains(index)){
+            System.err.println("index still in the pool");
+        }
+        indexPool.add(index);
+        id2Index.remove(pid);
+
     }
 
     /**
