@@ -53,12 +53,16 @@ public class TransactionTest extends TestUtil.CreateHeapFile {
    * during transactionComplete().
    */
   @Test public void attemptTransactionTwice() throws Exception {
+    // System.err.println("start trans-2");
     bp.getPage(tid1, p0, Permissions.READ_ONLY);
     bp.getPage(tid1, p1, Permissions.READ_WRITE);
-    bp.transactionComplete(tid1, true);
 
+    // System.err.println("try commit first one");
+    bp.transactionComplete(tid1, true);
+    // System.err.println("commit first one");
     bp.getPage(tid2, p0, Permissions.READ_WRITE);
     bp.getPage(tid2, p0, Permissions.READ_WRITE);
+    // System.err.println("----");
   }
 
   /**

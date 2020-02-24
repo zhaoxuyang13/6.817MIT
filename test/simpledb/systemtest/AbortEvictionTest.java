@@ -20,7 +20,6 @@ public class AbortEvictionTest extends SimpleDbTestBase {
         // BEGIN TRANSACTION
         Transaction t = new Transaction();
         t.start();
-
         // Insert a new row
         EvictionTest.insertRow(f, t);
 
@@ -28,8 +27,9 @@ public class AbortEvictionTest extends SimpleDbTestBase {
         boolean found = EvictionTest.findMagicTuple(f, t);
         assertTrue(found);
         // ABORT
+        // System.err.println("befoer abort");
         t.transactionComplete(true);
-
+        // System.err.println("after abort");
         // A second transaction must not find the tuple
         t = new Transaction();
         t.start();

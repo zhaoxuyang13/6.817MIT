@@ -72,9 +72,10 @@ public class Insert extends Operator {
         else called = true;
         int counter = 0;
         while (child.hasNext()) {
+            
             Tuple tuple = child.next();
             try {
-                bufferPool.insertTuple(tid, tableId, tuple);
+                bufferPool.insertTuple(tid, tableId, tuple);//
             } catch (IOException e) {
                 e.printStackTrace();
             }

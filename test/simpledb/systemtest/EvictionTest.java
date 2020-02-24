@@ -52,8 +52,10 @@ public class EvictionTest extends SimpleDbTestBase {
         // Insert the row
         Insert insert = new Insert(t.getId(), insertRow, f.getId());
         insert.open();
+
         Tuple result = insert.next();
         assertEquals(SystemTestUtil.SINGLE_INT_DESCRIPTOR, result.getTupleDesc());
+
         assertEquals(1, ((IntField)result.getField(0)).getValue());
         assertFalse(insert.hasNext());
         insert.close();
@@ -64,6 +66,7 @@ public class EvictionTest extends SimpleDbTestBase {
         SeqScan ss = new SeqScan(t.getId(), f.getId(), "");
         boolean found = false;
         ss.open();
+
         while (ss.hasNext()) {
             Tuple v = ss.next();
             int v0 = ((IntField)v.getField(0)).getValue();
