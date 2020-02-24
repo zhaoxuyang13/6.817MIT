@@ -7,7 +7,7 @@ import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.Arrays;
+
 
 import org.junit.Test;
 
@@ -208,21 +208,25 @@ public class TransactionTest extends SimpleDbTestBase {
     
     @Test public void testSingleThread()
             throws IOException, DbException, TransactionAbortedException {
+        System.err.println("single thread---------");
         validateTransactions(1);
     }
 
     @Test public void testTwoThreads()
             throws IOException, DbException, TransactionAbortedException {
+                System.err.println("2 thread---------");
         validateTransactions(2);
     }
 
     @Test public void testFiveThreads()
             throws IOException, DbException, TransactionAbortedException {
+                System.err.println("5 thread---------");
         validateTransactions(5);
     }
     
     @Test public void testTenThreads()
     throws IOException, DbException, TransactionAbortedException {
+        System.err.println("10 thread---------");
         validateTransactions(10);
     }
 

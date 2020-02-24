@@ -106,48 +106,47 @@ public class BufferPool {
             throws TransactionAbortedException, DbException {
 
         Catalog catalog = Database.getCatalog();
-
-        if (id2Page.containsKey(pid)) {
-            try {
-                lockManager.acquire(tid, id2Index.get(pid), perm);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            return id2Page.get(pid);
-        } else {
-            Page page = catalog.getDatabaseFile(pid.getTableId()).readPage(pid);
-            if (id2Page.size() <= numPages) {
-                // System.err.println("--");
-                // System.err.println(id2Page.size() + " ," + numPages + " ," + indexPool.size());
-                if (id2Page.size() == numPages) {
-                    evictPage();
-                }
-                // System.err.println(id2Page.size() + " ," + numPages + " ," + indexPool.size());
-                if (!indexPool.isEmpty()) {
-                    Integer index = indexPool.iterator().next();
-                    indexPool.remove(index);
-                    if (id2Index.containsKey(pid)) {
-                        System.err.println("pid already has index\n");
-                    }
-                    id2Index.put(pid, index);
-                }else {
-                    System.err.println("error,index pool shouldnt be empty");
-                }
+        System.err.println(tid.toString() + " get " + pid.toString() + " start");
+        synchronized (id2Page) {
+            if (id2Page.containsKey(pid)) {
                 try {
+                    System.err.println(tid.toString() + " get " + pid.toString() + " wait for lock");
                     lockManager.acquire(tid, id2Index.get(pid), perm);
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
+                    System.err.println(tid.toString() + " interuppted");
                     e.printStackTrace();
                 }
-                // System.err.println(id2Page.size() + " ," + numPages + " ," + indexPool.size());
-                id2Page.put(pid, page);
-                // System.err.println(id2Page.size() + " ," + numPages + " ," + indexPool.size());
+                System.err.println(tid.toString() + " get " + pid.toString() + " gotten");
+                return id2Page.get(pid);
+            } else {
+                System.err.println(tid.toString() + " get " + pid.toString() + " new buffer page");
+                Page page = catalog.getDatabaseFile(pid.getTableId()).readPage(pid);
+                if (id2Page.size() <= numPages) {
+                    if (id2Page.size() == numPages) {
+                        evictPage();
+                    }
+                    if (!indexPool.isEmpty()) {
+                        Integer index = indexPool.iterator().next();
+                        System.err.println(tid.toString() + " get " + pid.toString() + " new index get " + index);
+                        indexPool.remove(index);
+                        if (id2Index.containsKey(pid) && !id2Index.get(pid).equals(index)) {
+                            System.err.println("pid already has mismatched index");
+                        }
+                        id2Index.put(pid, index);
+                    } else {
+                        System.err.println("error,index pool shouldnt be empty");
+                    }
+                    try {
+                        lockManager.acquire(tid, id2Index.get(pid), perm);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    id2Page.put(pid, page);
+                } else {
+                    throw new DbException("buffer pool is full");
+                }
+                return page;
             }
-            else {
-                throw new DbException("buffer pool is full");
-            }
-            return page;
         }
     }
 
@@ -160,7 +159,7 @@ public class BufferPool {
      * @param pid the ID of the page to unlock
      */
     public void releasePage(TransactionId tid, PageId pid) {
-        if(!id2Index.containsKey(pid)){
+        if (!id2Index.containsKey(pid)) {
             throw new IllegalArgumentException("page not in buffer");
         }
         lockManager.release(tid, id2Index.get(pid));
@@ -173,7 +172,7 @@ public class BufferPool {
      * @param tid the ID of the transaction requesting the unlock
      */
     public void transactionComplete(TransactionId tid) throws IOException {
-        transactionComplete(tid,true);
+        transactionComplete(tid, true);
     }
 
     /** Return true if the specified transaction has a lock on the specified page */
@@ -191,14 +190,15 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid, boolean commit) throws IOException {
         // System.err.println("---------------");
         // System.err.println(commit);
-        if(commit){
+        if (commit) {
             flushPages(tid);
         }
-        for(Entry<PageId,Page> entry: id2Page.entrySet()){
+        for (Entry<PageId, Page> entry : id2Page.entrySet()) {
             Integer index = id2Index.get(entry.getKey());
-            if(lockManager.isHolding(tid, index)){
-                // System.err.println("release pid:" + entry.getKey().toString() +", tid is:" + tid.toString() + " , is dirty " + entry.getValue().isDirty());
-                if(!commit  && tid.equals(entry.getValue().isDirty())){
+            if (lockManager.isHolding(tid, index)) {
+                // System.err.println("release pid:" + entry.getKey().toString() +", tid is:" +
+                // tid.toString() + " , is dirty " + entry.getValue().isDirty());
+                if (!commit && tid.equals(entry.getValue().isDirty())) {
                     // System.err.println("discard");
                     discardPage(entry.getKey());
                 }
@@ -229,11 +229,12 @@ public class BufferPool {
         // System.err.println("insert");
         ArrayList<Page> pages = file.insertTuple(tid, t);
         for (Page page : pages) {
-            // System.err.println("markdirty page: "+ page.getId().toString() + ",for tid: " + tid);
+            // System.err.println("markdirty page: "+ page.getId().toString() + ",for tid: "
+            // + tid);
             page.markDirty(true, tid);
-            System.err.println(page.isDirty());
+            // System.err.println(page.isDirty());
             id2Page.put(page.getId(), page);
-            System.err.println(id2Page.get(page.getId()).isDirty());
+            // System.err.println(id2Page.get(page.getId()).isDirty());
         }
     }
 
@@ -255,7 +256,8 @@ public class BufferPool {
         DbFile file = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
         ArrayList<Page> pages = file.deleteTuple(tid, t);
         for (Page page : pages) {
-            System.err.println("delete markdirty page: "+ page.getId().toString() + ",for tid:" + tid);
+            // System.err.println("delete markdirty page: "+ page.getId().toString() + ",for
+            // tid:" + tid);
             page.markDirty(true, tid);
         }
     }
@@ -265,8 +267,8 @@ public class BufferPool {
      * dirty data to disk so will break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        for(Entry<PageId,Page> entry: id2Page.entrySet()){
-            flushPage(entry.getKey(),entry.getValue());
+        for (Entry<PageId, Page> entry : id2Page.entrySet()) {
+            flushPage(entry.getKey(), entry.getValue());
         }
     }
 
@@ -281,7 +283,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         id2Page.remove(pid);
         Integer index = id2Index.get(pid);
-        if(indexPool.contains(index)){
+        if (indexPool.contains(index)) {
             System.err.println("index still in the pool");
         }
         indexPool.add(index);
@@ -296,7 +298,7 @@ public class BufferPool {
      */
     private synchronized void flushPage(PageId pid) throws IOException {
         Page page = id2Page.get(pid);
-        flushPage(pid,page);
+        flushPage(pid, page);
     }
 
     private synchronized void flushPage(PageId pid, Page page) throws IOException {
@@ -304,48 +306,50 @@ public class BufferPool {
             System.err.println("no such pid to flush");
         }
         TransactionId tid = page.isDirty();
-        if(null != tid){
+        if (null != tid) {
             Database.getCatalog().getDatabaseFile(pid.getTableId()).writePage(page);
             page.markDirty(false, tid);
         }
     }
+
     /**
      * Write all pages of the specified transaction to disk.
      */
     public synchronized void flushPages(TransactionId tid) throws IOException {
-            for(Entry<PageId,Page> entry: id2Page.entrySet()){
-                PageId pid = entry.getKey();
-                Page page = entry.getValue();
-                // System.err.println("iterating :" +pid.toString());
-                if(lockManager.isHolding(tid, id2Index.get(pid))){
-                    flushPage(pid,page);
-                    page.setBeforeImage();
-                }
+        for (Entry<PageId, Page> entry : id2Page.entrySet()) {
+            PageId pid = entry.getKey();
+            Page page = entry.getValue();
+            // System.err.println("iterating :" +pid.toString());
+            if (lockManager.isHolding(tid, id2Index.get(pid))) {
+                flushPage(pid, page);
+                page.setBeforeImage();
             }
+        }
     }
 
     private synchronized PageId getEvictPage() throws DbException {
         PageId eldest = id2Page.eldestEntry().getKey();
-        if(id2Page.get(eldest).isDirty() != null){
-            for(Entry<PageId,Page> entry: id2Page.entrySet()){
-                if(entry.getValue().isDirty() == null){
+        if (id2Page.get(eldest).isDirty() != null) {
+            for (Entry<PageId, Page> entry : id2Page.entrySet()) {
+                if (entry.getValue().isDirty() == null) {
                     return entry.getKey();
                 }
             }
             throw new DbException("no clean page left");
-        }
-        else return eldest;
+        } else
+            return eldest;
     }
+
     /**
      * Discards a page from the buffer pool. Flushes the page to disk to ensure
      * dirty pages are updated on disk.
      */
     private synchronized void evictPage() throws DbException {
-       PageId evictPage = getEvictPage();
+        PageId evictPage = getEvictPage();
         try {
             flushPage(evictPage);
         } catch (IOException e) {
-           System.err.println("IO exception when flushing page");
+            System.err.println("IO exception when flushing page");
             e.printStackTrace();
         }
         discardPage(evictPage);
